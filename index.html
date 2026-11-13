@@ -284,6 +284,24 @@
   .hcard b { font-size: 16.5px; line-height: 1.25; }
   .hcard.add { border-top-style: dashed; background: var(--side); color: var(--accent); }
   .hnb { display: inline-flex; align-items: center; }
+  /* cabeçalho do Início: linhas de contorno em paralaxe e números-chave */
+  .hero { height: 300px; background: linear-gradient(180deg, var(--hero), var(--side)); }
+  .hero::before { display: none; }
+  .hero .wv { position: absolute; inset: -20px -40px; width: calc(100% + 80px); height: calc(100% + 40px); fill: none; stroke: var(--o2); will-change: transform; }
+  .hero .w1 { stroke-width: 1; opacity: .55; }
+  .hero .w2 { stroke-width: 1.6; stroke: var(--o1); opacity: .30; }
+  .hero .htx { top: 46px; bottom: auto; max-width: none; }
+  .hero h2 { font-size: 38px; }
+  .hstats { display: flex; gap: 12px; margin-top: 26px; overflow-x: auto; padding-bottom: 4px; }
+  .hst { flex: 0 0 auto; min-width: 132px; background: color-mix(in srgb, var(--card) 82%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 14px; padding: 11px 16px 12px; position: relative; }
+  .hst b { display: block; font-size: 30px; line-height: 1.05; letter-spacing: -.02em; color: var(--ink); }
+  .hst span { font-size: 12px; color: var(--body); }
+  .hst.bad b { color: var(--bad); }
+  .hst .spark { position: absolute; right: 12px; top: 12px; display: flex; align-items: flex-end; gap: 2px; height: 28px; }
+  .hst .spark i { width: 4px; border-radius: 1px; background: var(--o2); display: block; }
+  .hst .spark i.t { background: var(--accent); }
+  .hst:has(.spark) { min-width: 210px; }
+  @media (max-width: 900px) { .hero { height: 268px; } .hero .htx { top: 54px; bottom: auto; } .hero h2 { font-size: 28px; } .hstats { margin-top: 16px; } .hst b { font-size: 24px; } .hst { min-width: 108px; padding: 9px 12px; } }
   /* imagens: seleccionar, redimensionar, alinhar, mover */
   .content img { cursor: pointer; }
   .content img.al-l { float: left; margin: 6px 18px 10px 0; } .content img.al-r { float: right; margin: 6px 0 10px 18px; } .content img.al-c { margin-left: auto; margin-right: auto; }
@@ -547,10 +565,13 @@
     var byDay = {}; notes.forEach(function (n) { var k = (n.updatedAt || "").slice(0, 10); byDay[k] = (byDay[k] || 0) + 1; });
     var days = []; for (var di = 13; di >= 0; di--) { var x = new Date(); x.setDate(x.getDate() - di); days.push(x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0")); }
     var mx = Math.max.apply(null, days.map(function (k) { return byDay[k] || 0; }).concat([1]));
-    var act = '<div class="act" data-d="0.1" title="Notas alteradas por dia, últimos 14 dias"><span>Actividade · 14 dias</span>' + days.map(function (k) { return '<i' + (k === td ? ' class="t"' : '') + ' style="height:' + Math.round(4 + (byDay[k] || 0) / mx * 38) + 'px"></i>'; }).join("") + '</div>';
-    host.innerHTML = '<div class="home"><div class="hero"><div class="sh s4" data-d="0.15"></div><div class="sh s1" data-d="0.42"></div><div class="sh s2" data-d="0.28"></div><div class="sh s5" data-d="0.6"></div><div class="sh s3" data-d="0.5" data-r="-8"></div>' + act +
-      '<button type="button" class="ib back" data-go="nav" aria-label="Menu">☰</button><div class="htx"><h2>' + (hr < 12 ? "Bom dia" : hr < 20 ? "Boa tarde" : "Boa noite") + ', Rodrigo</h2><p>' + dias[d.getDay()] + ', ' + d.getDate() + ' de ' + ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][d.getMonth()] +
-      ' · ' + notes.length + (notes.length === 1 ? " nota" : " notas") + (late ? ' · ' + late + (late === 1 ? " tarefa atrasada" : " tarefas atrasadas") : hoje ? ' · ' + hoje + ' para hoje' : tasks.length ? ' · ' + tasks.length + ' por fazer' : '') + '</p></div></div>' +
+    var wave = function (n, y0, gap, amp, f, ph) { var out = ""; for (var i = 0; i < n; i++) { var d = ""; for (var x = -40; x <= 1680; x += 28) { var y = y0 + i * gap + amp * Math.sin(x / f + i * .55 + ph) + amp * .45 * Math.sin(x / (f * .37) + i * 1.3 + ph * 2); d += (x === -40 ? "M" : "L") + x + " " + y.toFixed(1); } out += '<path d="' + d + '"/>'; } return out; };
+    var week = 0; days.slice(7).forEach(function (k) { week += byDay[k] || 0; });
+    var bars = days.map(function (k) { return '<i' + (k === td ? ' class="t"' : '') + ' style="height:' + Math.round(3 + (byDay[k] || 0) / mx * 25) + 'px"></i>'; }).join("");
+    var stat = function (v, l, extra, cls) { return '<div class="hst' + (cls ? " " + cls : "") + '"><b>' + v + '</b><span>' + l + '</span>' + (extra || "") + '</div>'; };
+    var stats = '<div class="hstats">' + stat(notes.length, notes.length === 1 ? "nota" : "notas") + stat(tasks.length, tasks.length === 1 ? "tarefa por fazer" : "tarefas por fazer") + (late ? stat(late, late === 1 ? "atrasada" : "atrasadas", "", "bad") : stat(hoje, "para hoje")) + stat(week, "alteradas em 7 dias", '<div class="spark" title="Notas alteradas por dia, últimos 14 dias">' + bars + '</div>') + '</div>';
+    host.innerHTML = '<div class="home"><div class="hero"><svg class="wv w1" data-d="0.16" viewBox="0 0 1640 330" preserveAspectRatio="none" aria-hidden="true">' + wave(9, 18, 36, 16, 210, 0) + '</svg><svg class="wv w2" data-d="0.4" viewBox="0 0 1640 330" preserveAspectRatio="none" aria-hidden="true">' + wave(4, 70, 74, 26, 300, 1.7) + '</svg>' +
+      '<button type="button" class="ib back" data-go="nav" aria-label="Menu">☰</button><div class="htx"><h2>' + (hr < 12 ? "Bom dia" : hr < 20 ? "Boa tarde" : "Boa noite") + ', Rodrigo</h2><p>' + dias[d.getDay()] + ', ' + d.getDate() + ' de ' + ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"][d.getMonth()] + '</p>' + stats + '</div></div>' +
       '<div class="hbody"><div class="hsec"><h3>Notas recentes <a href="#" data-v="all">Ver todas →</a></h3><div class="hrow"><button type="button" class="hcard add" data-act="homeNew">+ Nova nota</button>' + notes.slice(0, 12).map(card).join("") + '</div></div>' +
       (favs.length ? '<div class="hsec"><h3>Fixadas e atalhos</h3><div class="hrow">' + favs.map(card).join("") + '</div></div>' : '') +
       '<div class="hsec hgrid"><div><h3 class="hh">Tarefas <a href="#" data-v="tasks" style="margin-left:auto">Ver todas →</a></h3><form class="tadd" id="tAdd"><input type="text" name="t" placeholder="Nova tarefa…" aria-label="Nova tarefa"><input type="date" name="d" aria-label="Data"><button class="btn p" type="submit">+</button></form>' +
@@ -561,7 +582,7 @@
     var home = $(".home", host), hero = $(".hero", host), px = 0, py = 0, raf = 0;
     var paint = function () {
       raf = 0; var y = home.scrollTop, k = Math.min(1, y / 200);
-      $$("[data-d]", hero).forEach(function (l) { var dd = Number(l.getAttribute("data-d")); l.style.transform = "translate3d(" + (px * 60 * dd).toFixed(1) + "px," + (y * dd + py * 40 * dd).toFixed(1) + "px,0) rotate(" + (Number(l.getAttribute("data-r") || 0) + px * dd * 10).toFixed(2) + "deg) scale(" + (1 + k * dd * .25).toFixed(3) + ")"; });
+      $$("[data-d]", hero).forEach(function (l) { var dd = Number(l.getAttribute("data-d")); l.style.transform = "translate3d(" + (px * 60 * dd).toFixed(1) + "px," + (y * dd + py * 40 * dd).toFixed(1) + "px,0) scale(" + (1.06 + k * dd * .2).toFixed(3) + ")"; });
       var tx = $(".htx", hero); tx.style.transform = "translate3d(0," + (y * .35).toFixed(1) + "px,0)"; tx.style.opacity = String(1 - k * .9);
     };
     var req = function () { if (!raf) raf = requestAnimationFrame(paint); };
